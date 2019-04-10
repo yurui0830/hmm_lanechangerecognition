@@ -7,15 +7,13 @@ def concatenate_feature_label(filename, n_feature: int = 6):
     function generate_feature_label(filename, n_feature)
 
     :param
-        filename(str: 'rightlc', 'leftlc' or 'lk'): path of the .csv file
-        n_features(int): how many features are kept, default: 6
+        filename(str: 'rightlc', 'leftlc' or 'lk'): filename of the .csv file
+        n_features(int): how many features will be kept, default: 6
 
     :return
-        headings(list: n_features): feature categories
         features(array: n_samples * n_features): n_samples = n_sequence * time steps inside each sequence
         label(int array: n_samples,): each element(label: 0, 1, 2, ...) has the same index as features
         seq_range(array: n_sequence+1,): record index of each sequence in the feature vector
-
     """
 
 # open .csv file, store all the data in rows(list)
@@ -229,7 +227,7 @@ def concatenate_feature_label(filename, n_feature: int = 6):
             else:
                 seq = seq + 1
 
-# normalize heading angle
+# set saturation values for heading angle and yaw rate
     for i in range(np.size(features,0)):
         if features[i,4] > 2.5:
             features[i,4] = 2.5

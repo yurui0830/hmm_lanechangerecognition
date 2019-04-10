@@ -4,17 +4,18 @@ def feat_extract(features, label, seq_range):
 
     """
     funtion feat_extract (features, label, seq_range)
+
     :param
-        features(array: n_seq * n_feature): result from readcsvdata.py
-        label(array: n_seq,): result from readcsvdata.py
-        seq_range(array: n_sequence+1, ): result from readcsvdata.py
+        features(array: n_seq * n_feature): result from readcsvdata.py/concatenate_features.py
+        label(array: n_seq,): result from readcsvdata.py/concatenate_features.py
+        seq_range(array: n_sequence+1, ): result from readcsvdata.py/concatenate_features.py
     :return:
         features_new(array: n_seq_new * n_feature): 20s before the start point and 30s after the start point
         label_new(array: n_seq_new,): 20s before the start point and 30s after the start point
         seq_range_new(array: n_sequence+1,): 20s before the start point and 30s after the start point
     """
 
-    # how many sequences inside this data set
+# how many sequences inside this data set
     n_sequence = np.size(seq_range, 0) - 1
 
 # initialize variables

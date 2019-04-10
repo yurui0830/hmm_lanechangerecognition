@@ -12,7 +12,6 @@ def generate_feature_label(filename, n_feature: int = 6):
         n_features(int): how many features are kept, default: 6
 
     :return
-        headings(list: n_features): feature categories
         features(array: n_samples * n_features): n_samples = n_sequence * time steps inside each sequence
         label(int array: n_samples,): each element(label: 0, 1, 2, ...) has the same index as features
         seq_range(array: n_sequence+1,): record index of each sequence in the feature vector
@@ -182,6 +181,7 @@ def generate_feature_label(filename, n_feature: int = 6):
 
 # delete useless features
     features = np.delete(features, np.s_[0:6-n_feature], 1)
+    # headings: feature categories
     del headings[0:6-n_feature]
 
 # return value

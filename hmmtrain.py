@@ -10,9 +10,11 @@ def hmm_train(features, label, seq_range):
 
     """
     function hmmtrain(features, label, seq_range)
+
     :param
-        features, label, seq_range: return value from generate_feature_label()
+        features, label, seq_range: return values from readcsvdata.py/concatenate_features.py
     :return:
+        new_model(GaussianHMM class): well-trained model
 
     """
 

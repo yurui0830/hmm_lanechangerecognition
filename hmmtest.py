@@ -5,17 +5,19 @@ from model import HiddenMarkovModel
 from hmmtrain import hmm_train
 from extractfeat import feat_extract
 
-def hmm_test(testclass, slot, n_feature: int = 6):
+def hmm_test(testclass, training_set, slot = '1s', n_feature: int = 6):
 
     """
     funtion hmm_test(n_feature)
 
     :param
         testfile(str: 'rightlc', 'leftlc' or 'lk'): name of test class
-        slot(str: 'whole', '1s' or '0.5s'):
-        n_feature(int: 2, 3 or 6): how many features are kept, default: 2
+        training_set(str: 'whole', '5s' or ''): train the model by the complete dataset or part (50 steps) of the dataset
+        slot(str: '1s' or '0.5s'): 1s or 0.5s, default: 1s. useless if training set is 'whole'
+        n_feature(int: 2, 3 or 6): how many features are kept, default: 6
 
     :return
+        precision(float): true positive rate
     """
 
 # extract training set
@@ -85,20 +87,18 @@ def hmm_test(testclass, slot, n_feature: int = 6):
         globals()[fea] = np.delete(temp_fea, np.s_[start:stop], 0)
         globals()[lab] = np.delete(temp_lab, np.s_[start:stop], 0)
 
-# extract features (training the model using extracted features)
-        (new_features_r, new_label_r, new_seq_range_r) = feat_extract(features_r, label_r, seq_range_r)
-        (new_features_l, new_label_l, new_seq_range_l) = feat_extract(features_l, label_l, seq_range_l)
-
 # train three HMMs with labelled data
-        """
-        # train the model by partial sequence
-        model_right = hmm_train(new_features_r, new_label_r, new_seq_range_r)
-        model_left = hmm_train(new_features_l, new_label_l, new_seq_range_l)
-        """
-        # train the model by the whole sequence
-        model_right = hmm_train(features_r, label_r, seq_range_r)
-        model_left = hmm_train(features_l, label_l, seq_range_l)
-        #"""
+        if training_set == 'whole':
+            slot == 'whole'
+            model_right = hmm_train(features_r, label_r, seq_range_r)
+            model_left = hmm_train(features_l, label_l, seq_range_l)
+        elif training_set == '5s':
+            # extract features (training the model using extracted features)
+            (part_features_r, part_label_r, part_seq_range_r) = feat_extract(features_r, label_r, seq_range_r)
+            (part_features_l, part_label_l, part_seq_range_l) = feat_extract(features_l, label_l, seq_range_l)
+            # train the model by partial sequence
+            model_right = hmm_train(part_features_r, part_label_r, part_seq_range_r)
+            model_left = hmm_train(part_features_l, part_label_l, part_seq_range_l)
         model_lk = hmm_train(features_lk, label_lk, seq_range_lk)
 
 # find start point for each lane change behavior in the testing set
