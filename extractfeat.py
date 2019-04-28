@@ -1,9 +1,9 @@
 import numpy as np
 
-def feat_extract(features, label, seq_range):
+def feat_clip(features, label, seq_range):
 
     """
-    funtion feat_extract (features, label, seq_range)
+    funtion feat_clip (features, label, seq_range)
 
     :param
         features(array: n_seq * n_feature): result from readcsvdata.py/concatenate_features.py

@@ -3,7 +3,7 @@ from readcsvdata import generate_feature_label
 from concatenate_features import concatenate_feature_label
 from model import HiddenMarkovModel
 from hmmtrain import hmm_train
-from extractfeat import feat_extract
+from extractfeat import feat_clip
 
 def hmm_test(testclass, training_set, slot = '1s', n_feature: int = 6):
 
@@ -94,8 +94,8 @@ def hmm_test(testclass, training_set, slot = '1s', n_feature: int = 6):
             model_left = hmm_train(features_l, label_l, seq_range_l)
         elif training_set == '5s':
             # extract features (training the model using extracted features)
-            (part_features_r, part_label_r, part_seq_range_r) = feat_extract(features_r, label_r, seq_range_r)
-            (part_features_l, part_label_l, part_seq_range_l) = feat_extract(features_l, label_l, seq_range_l)
+            (part_features_r, part_label_r, part_seq_range_r) = feat_clip(features_r, label_r, seq_range_r)
+            (part_features_l, part_label_l, part_seq_range_l) = feat_clip(features_l, label_l, seq_range_l)
             # train the model by partial sequence
             model_right = hmm_train(part_features_r, part_label_r, part_seq_range_r)
             model_left = hmm_train(part_features_l, part_label_l, part_seq_range_l)

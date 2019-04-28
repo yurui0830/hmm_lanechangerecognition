@@ -1,7 +1,7 @@
 import numpy as np
 import csv
 
-def concatenate_feature_label(filename, n_feature: int = 6):
+def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = 1):
 
     """
     function generate_feature_label(filename, n_feature)
@@ -9,6 +9,7 @@ def concatenate_feature_label(filename, n_feature: int = 6):
     :param
         filename(str: 'rightlc', 'leftlc' or 'lk'): filename of the .csv file
         n_features(int): how many features will be kept, default: 6
+        saturation(bool): if set a saturation value for heading angle and yaw rate or not
 
     :return
         features(array: n_samples * n_features): n_samples = n_sequence * time steps inside each sequence
@@ -228,15 +229,16 @@ def concatenate_feature_label(filename, n_feature: int = 6):
                 seq = seq + 1
 
 # set saturation values for heading angle and yaw rate
-    for i in range(np.size(features,0)):
-        if features[i,4] > 2.5:
-            features[i,4] = 2.5
-        elif features[i,4] < -2.5:
-            features[i,4] = -2.5
-        if features[i,5] > 0.8:
-            features[i,5] = 0.8
-        elif features[i,5] < -0.8:
-            features[i, 5] = -0.8
+    if satruation == 1:
+        for i in range(np.size(features,0)):
+            if features[i,4] > 2.5:
+                features[i,4] = 2.5
+            elif features[i,4] < -2.5:
+                features[i,4] = -2.5
+            if features[i,5] > 0.8:
+                features[i,5] = 0.8
+            elif features[i,5] < -0.8:
+                features[i, 5] = -0.8
 
 # delete useless features
     features = np.delete(features, np.s_[0:6-n_feature], 1)
