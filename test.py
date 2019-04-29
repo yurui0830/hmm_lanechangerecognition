@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 #(features_1, label_1, seq_range_1) = generate_feature_label('leftlc_101', n_feature=3)
 #(features_2, label_2, seq_range_2) = generate_feature_label('leftlc_i80', n_feature=3)
-(features, label, seq_range) = concatenate_feature_label('leftlc', n_feature=3, satruation=0)
+(features, label, seq_range) = concatenate_feature_label('leftlc', n_feature=3, satruation=False)
 
 plt.plot(features[seq_range[1]:seq_range[2],1])
 plt.ylabel('heading angles')

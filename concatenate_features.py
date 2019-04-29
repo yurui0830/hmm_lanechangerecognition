@@ -1,7 +1,7 @@
 import numpy as np
 import csv
 
-def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = 1):
+def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = True):
 
     """
     function generate_feature_label(filename, n_feature)
@@ -9,7 +9,7 @@ def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = 1
     :param
         filename(str: 'rightlc', 'leftlc' or 'lk'): filename of the .csv file
         n_features(int): how many features will be kept, default: 6
-        saturation(bool): if set a saturation value for heading angle and yaw rate or not
+        saturation(bool): if set a saturation value for heading angle and yaw rate or not, default: True
 
     :return
         features(array: n_samples * n_features): n_samples = n_sequence * time steps inside each sequence

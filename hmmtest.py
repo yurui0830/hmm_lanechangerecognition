@@ -5,14 +5,14 @@ from model import HiddenMarkovModel
 from hmmtrain import hmm_train
 from extractfeat import feat_clip
 
-def hmm_test(testclass, training_set, slot = '1s', n_feature: int = 6):
+def hmm_test(testclass, training_set = 'part', slot = '1s', n_feature: int = 6):
 
     """
     funtion hmm_test(n_feature)
 
     :param
         testfile(str: 'rightlc', 'leftlc' or 'lk'): name of test class
-        training_set(str: 'whole', '5s' or ''): train the model by the complete dataset or part (50 steps) of the dataset
+        training_set(str: 'whole', or 'part'): train the model by the complete or part of the dataset, default: part
         slot(str: '1s' or '0.5s'): 1s or 0.5s, default: 1s. useless if training set is 'whole'
         n_feature(int: 2, 3 or 6): how many features are kept, default: 6
 
@@ -92,7 +92,7 @@ def hmm_test(testclass, training_set, slot = '1s', n_feature: int = 6):
             slot == 'whole'
             model_right = hmm_train(features_r, label_r, seq_range_r)
             model_left = hmm_train(features_l, label_l, seq_range_l)
-        elif training_set == '5s':
+        elif training_set == 'part':
             # extract features (training the model using extracted features)
             (part_features_r, part_label_r, part_seq_range_r) = feat_clip(features_r, label_r, seq_range_r)
             (part_features_l, part_label_l, part_seq_range_l) = feat_clip(features_l, label_l, seq_range_l)
