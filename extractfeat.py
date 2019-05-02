@@ -30,12 +30,14 @@ def feat_clip(features, label, seq_range):
         stop = seq_range[i + 1]
         # find the start point by labels
         start_point[i] = np.argwhere(label[start:stop] == 1)[0] + seq_range[i]
-        # extract features and labels
+        # extract features and labels (2 sec before and 3 sec after the maneuver begins)
         if start_point[i]-20 > seq_range[i]:
+            # from 2 sec before to 3 sec after the maneuver begins
             seq_range_new[i+1] = seq_range_new[i] + 50
             features_new[seq_range_new[i]:seq_range_new[i+1]] = features[start_point[i]-20:start_point[i]+30]
             label_new[seq_range_new[i]:seq_range_new[i+1]] = label[start_point[i]-20:start_point[i]+30]
         else:
+            # from the start of the sequence to 3 sec after the maneuver begins
             seq_range_new[i+1] = seq_range_new[i] + start_point[i]+30 - seq_range[i]
             features_new[seq_range_new[i]:seq_range_new[i+1]] = features[seq_range[i]:start_point[i]+30]
             label_new[seq_range_new[i]:seq_range_new[i+1]] = label[seq_range[i]:start_point[i]+30]

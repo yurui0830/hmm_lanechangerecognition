@@ -4,7 +4,7 @@ import csv
 def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = True):
 
     """
-    function generate_feature_label(filename, n_feature)
+    function concatenate_feature_label(filename, n_feature)
 
     :param
         filename(str: 'rightlc', 'leftlc' or 'lk'): filename of the .csv file
