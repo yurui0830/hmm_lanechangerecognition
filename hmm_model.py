@@ -1,5 +1,6 @@
 import numpy as np
 from emissionprob import b_emission
+from hmmlearn.hmm import GaussianHMM
 from sklearn.externals import joblib
 
 class HiddenMarkovModel(object):
@@ -177,7 +178,7 @@ class HiddenMarkovModel(object):
         """
         # find how many states in the labelled data, how many features in the data,
         # tot_seq(int): how many time steps in the whole input features
-        self.n_state = np.ptp(label)+1
+        self.n_state = int(np.ptp(label)+1)
         tot_seq = np.size(features, 0)
         # initialize some temporary variables
         count_start = np.zeros((self.n_state, ))
@@ -232,5 +233,39 @@ class HiddenMarkovModel(object):
                 alpha[n,t] = (np.dot(alpha[:,t-1], self.A[:,n])) * self.B[n,t]
         # Equation 21
         prob = np.sum(alpha[:,-1])
+        if prob <= 0:
+            prob = 1e-10
         score = np.log(prob)
         return score
+
+
+def hmm_train(features, label, seq_range):
+
+    """
+    function hmmtrain(features, label, seq_range)
+
+    :param
+        features, label, seq_range: return values from readcsvdata.py/concatenate_features.py
+    :return:
+        new_model(GaussianHMM class): well-trained model
+
+    """
+
+# find total number of states
+    n_state = int(np.ptp(label)+1)
+
+# supervised learning
+# model: class HiddenMarkovModel, calculate hyper parameters from labels
+    model = HiddenMarkovModel(n_feature=np.size(features,1), n_state=n_state)
+    model.supervised_learn(features, label, seq_range)
+
+# Gaussian HMM (unsupervised)
+# new model: class GaussianHMM (from hmmlearn), feed the new model by calculated parameters
+    new_model = GaussianHMM(n_components=np.max(label)+1, covariance_type='full')
+    new_model.transmat_ = model.A
+    new_model.startprob_ = model.startprob
+    new_model.means_ = model.mu
+    new_model.covars_ = model.sigma
+
+# return value
+    return new_model

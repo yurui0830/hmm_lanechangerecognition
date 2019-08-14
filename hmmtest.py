@@ -1,164 +1,95 @@
 import numpy as np
-from readcsvdata import generate_feature_label
 from concatenate_features import concatenate_feature_label
-from model import HiddenMarkovModel
-from hmmtrain import hmm_train
 from extractfeat import feat_clip
+from hmm_model import hmm_train
+from sklearn.model_selection import train_test_split
 
-def hmm_test(testclass, training_set = 'part', slot = '1s', n_feature: int = 6):
+
+def unfold_x(x, y, dataset='train'):
+    if dataset == 'test':
+        feature = np.zeros((5000, 6))
+        for i in range(x.shape[0]):
+            temp = np.reshape(x[i], (20, 7))
+            feature[i * 20:(i + 1) * 20] = temp[:, 0:6]
+        return feature
+
+    r, l, lk = [0] * 3
+    feature_r = np.zeros((5000, 6))
+    feature_l = np.zeros((5000, 6))
+    feature_lk = np.zeros((5000, 6))
+    label_r = np.zeros((5000,))
+    label_l = np.zeros((5000,))
+    label_lk = np.zeros((5000,))
+    for i in range(x.shape[0]):
+        if y[i] == 0:
+            temp = np.reshape(x[i], (20, 7))
+            feature_r[r * 20:(r + 1) * 20] = temp[:, 0:6]
+            label_r[r * 20:(r + 1) * 20] = temp[:, 6]
+            r = r + 1
+        elif y[i] == 1:
+            temp = np.reshape(x[i], (20, 7))
+            feature_l[20 * l:20 * (l + 1)] = temp[:, 0:6]
+            label_l[l * 20:(l + 1) * 20] = temp[:, 6]
+            l = l + 1
+        elif y[i] == 2:
+            temp = np.reshape(x[i], (20, 7))
+            feature_lk[20 * lk: 20 * (lk + 1)] = temp[:, 0:6]
+            label_lk[lk * 20:(lk + 1) * 20] = temp[:, 6]
+            lk = lk + 1
+
+    seq_range_r = np.arange(0, (r + 1) * 20, 20)
+    seq_range_l = np.arange(0, (l + 1) * 20, 20)
+    seq_range_lk = np.arange(0, (lk + 1) * 20, 20)
+    feature_r = np.delete(feature_r, np.s_[r * 20:5000], axis=0)
+    label_r = np.delete(label_r, np.s_[r * 20:5000])
+    feature_l = np.delete(feature_l, np.s_[l * 20:5000], axis=0)
+    label_l = np.delete(label_l, np.s_[l * 20:5000])
+    feature_lk = np.delete(feature_lk, np.s_[lk * 20:5000], axis=0)
+    label_lk = np.delete(label_lk, np.s_[lk * 20:5000])
+
+    return feature_r, label_r, seq_range_r, feature_l, label_l, seq_range_l, feature_lk, label_lk, seq_range_lk
+
+def hmm_trian_test(trian_x, train_y, test_x, test_y):
 
     """
     funtion hmm_test(n_feature)
 
     :param
-        testfile(str: 'rightlc', 'leftlc' or 'lk'): name of test class
-        training_set(str: 'whole', or 'part'): train the model by the complete or part of the dataset, default: part
-        slot(str: '1s' or '0.5s'): 1s or 0.5s, default: 1s. useless if training set is 'whole'
+        training_set(str: 'whole', or '1s'): train the model by the complete or part of the dataset, default: 1s
         n_feature(int: 2, 3 or 6): how many features are kept, default: 6
 
     :return
         precision(float): true positive rate
     """
 
-# extract training set
-    (features_r, label_r, seq_range_r) = concatenate_feature_label('rightlc', n_feature=n_feature)
-    (features_l, label_l, seq_range_l) = concatenate_feature_label('leftlc', n_feature=n_feature)
-    (features_lk, label_lk, seq_range_lk) = concatenate_feature_label('lk', n_feature=n_feature)
+    # prepare training set
+    feat_r, label_r, s_range_r, feat_l, label_l, s_range_l, feat_lk, label_lk, s_range_lk = unfold_x(trian_x, train_y)
+    # model training
+    model_right = hmm_train(feat_r, label_r, s_range_r)
+    model_left = hmm_train(feat_l, label_l, s_range_l)
+    model_lk = hmm_train(feat_lk, label_lk, s_range_lk)
 
-# extract testing set, cross validation
-    # n_test(int): how many samples in one testing set
-    # temporary variable: temporarily store all the samples of test class
-    if testclass == 'rightlc':
-        state = 0
-        n_test = round(np.size(seq_range_r, 0) / 3)
-        temp_fea = features_r
-        temp_lab = label_r
-        temp_sr = seq_range_r
-        fea = 'features_r'
-        lab = 'label_r'
-        sr = 'seq_range_r'
-    elif testclass == 'leftlc':
-        state = 1
-        n_test = round(np.size(seq_range_l, 0) / 3)
-        temp_fea = features_l
-        temp_lab = label_l
-        temp_sr = seq_range_l
-        fea = 'features_l'
-        lab = 'label_l'
-        sr = 'seq_range_l'
-    elif testclass == 'lk':
-        state = 2
-        n_test = round(np.size(seq_range_lk, 0) / 3)
-        temp_fea = features_lk
-        temp_lab = label_lk
-        temp_sr = seq_range_lk
-        fea = 'features_lk'
-        lab = 'label_lk'
-        sr = 'seq_range_lk'
-    # split test set, cross validation
-    # tp: true positive rate of each round
-    tpr = np.zeros((3,))
-    # rd: round
-    for rd in range(3):
-        # generate testing set (features, label, seq_range)
-        if rd == 0:
-            start = n_test*rd
-            stop = n_test*rd + n_test
-            features = temp_fea[temp_sr[start]:temp_sr[stop]]
-            label = temp_lab[temp_sr[start]:temp_sr[stop]]
-            seq_range = temp_sr[start:stop] - temp_sr[start]
-            globals()[sr] = np.delete(temp_sr, np.s_[start:stop]) - temp_sr[stop]
-        elif rd == 1:
-            start = n_test * rd
-            stop = n_test * rd + n_test
-            features = temp_fea[temp_sr[start]:temp_sr[stop]]
-            label = temp_lab[temp_sr[start]:temp_sr[stop]]
-            seq_range = temp_sr[start:stop] - temp_sr[start]
-            globals()[sr] = np.delete(temp_sr, np.s_[start:stop])
-            globals()[sr][stop:] = globals()[sr][stop:] - (temp_sr[stop]-temp_sr[start])
-        elif rd == 2:
-            start = n_test*rd
-            stop = -1
-            features = temp_fea[temp_sr[start]:temp_sr[stop]]
-            label = temp_lab[temp_sr[start]:temp_sr[stop]]
-            seq_range = temp_sr[start:stop] - temp_sr[start]
-            globals()[sr] = np.delete(temp_sr, np.s_[start:stop])
-        # features_r, label_r, seq_range_r: training set
-        globals()[fea] = np.delete(temp_fea, np.s_[start:stop], 0)
-        globals()[lab] = np.delete(temp_lab, np.s_[start:stop], 0)
+    # prepare testing set
+    n_sequence = test_x.shape[0]
+    test_feat = unfold_x(test_x, test_y, dataset='test')
+    seq_range = np.arange(0, (n_sequence+1)*20, 20)
+    # model testing
+    result_prob = np.zeros((n_sequence, 3))
+    result = np.zeros((n_sequence,), dtype=int)
+    for i in range(n_sequence):
+        prob_r = model_right.score(test_feat[seq_range[i]:seq_range[i+1]])
+        prob_l = model_left.score(test_feat[seq_range[i]:seq_range[i+1]])
+        prob_lk = model_lk.score(test_feat[seq_range[i]:seq_range[i+1]])
+        # store and compare probabilities
+        result_prob[i] = [prob_r, prob_l, prob_lk]
+        result[i] = np.argmax(result_prob[i])
 
-# train three HMMs with labelled data
-        if training_set == 'whole':
-            slot == 'whole'
-            model_right = hmm_train(features_r, label_r, seq_range_r)
-            model_left = hmm_train(features_l, label_l, seq_range_l)
-        elif training_set == 'part':
-            # extract features (training the model using extracted features)
-            (part_features_r, part_label_r, part_seq_range_r) = feat_clip(features_r, label_r, seq_range_r)
-            (part_features_l, part_label_l, part_seq_range_l) = feat_clip(features_l, label_l, seq_range_l)
-            # train the model by partial sequence
-            model_right = hmm_train(part_features_r, part_label_r, part_seq_range_r)
-            model_left = hmm_train(part_features_l, part_label_l, part_seq_range_l)
-        model_lk = hmm_train(features_lk, label_lk, seq_range_lk)
-
-# find start point for each lane change behavior in the testing set
-        start_point = np.zeros((np.size(seq_range, 0) - 1,), dtype=int)
-        if testclass != 'lk':
-            # initialize start_point(array: n_sequence,): store index of each start point
-            for i in range(np.size(seq_range, 0) - 1):
-                start = seq_range[i]
-                stop = seq_range[i + 1]
-                # find the start point by labels
-                start_point[i] = np.argwhere(label[start:stop] == 1)[0] + seq_range[i]
-        else:
-            for i in range(np.size(seq_range, 0) - 1):
-                start_point[i] = seq_range[i]+30
-
-# test: compare probabilities
-        # result_prob(array: number of sequences * n_state): store probabilities from each model
-        # result(array: number of sequences,): store the final result (state)
-        result_prob = np.zeros((np.size(seq_range, 0)-1, 3))
-        result = np.zeros((np.size(seq_range, 0)-1,))
-        for i in range(np.size(seq_range, 0)-1):
-            # whole process
-            if slot == 'whole':
-                prob_r = model_right.score(features[seq_range[i]:seq_range[i+1]])
-                prob_l = model_left.score(features[seq_range[i]:seq_range[i+1]])
-                prob_lk = model_lk.score(features[seq_range[i]:seq_range[i+1]])
-            # 2s before + 1s after
-            elif slot == '1s':
-                if start_point[i] - 20 > seq_range[i]:
-                    start = start_point[i] - 20
-                else:
-                    start = seq_range[i]
-                stop = start_point[i] + 10
-                prob_r = model_right.score(features[start:stop])
-                prob_l = model_left.score(features[start:stop])
-                prob_lk = model_lk.score(features[start:stop])
-            # 2.5s before + o.5s after
-            elif slot == '0.5s':
-                if start_point[i] - 25 > seq_range[i]:
-                    start = start_point[i] - 25
-                else:
-                    start = seq_range[i]
-                stop = start_point[i] + 5
-                prob_r = model_right.score(features[start:stop])
-                prob_l = model_left.score(features[start:stop])
-                prob_lk = model_lk.score(features[start:stop])
-            # store and compare probabilities
-            result_prob[i] = [prob_r, prob_l, prob_lk]
-            result[i] = np.argmax(result_prob[i])
-
-# print specific results
-            #print(testclass, rd, '-fold:')
-            #print(result_prob[i])
-            #print(result[i])
-
-# calculate true positive rate, cross validation result
-        # tpr(array: rd,): true positive rate
-        tpr[rd] = np.count_nonzero(result == state)/(np.size(seq_range, 0)-1)
-    # calculate average of true positive rates
-    precision = np.mean(tpr)
+    # confusion matrix: row: predictions; column: labels
+    confusion = np.zeros([3, 3])
+    for i in range(n_sequence):
+        confusion[result[i], test_y[i]] = confusion[result[i], test_y[i]] + 1
+    # acc(array: rd,): true positive rate
+    acc = np.count_nonzero(result == test_y)/n_sequence
 
 # return value
-    return precision
+    return acc, confusion

@@ -1,7 +1,7 @@
 import numpy as np
 from readcsvdata import generate_feature_label
 from extractfeat import feat_extract
-from hmmtrain import hmm_train
+from hmm_model import hmm_train
 
 
 # extract training set from 101 data set
