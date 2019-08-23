@@ -256,7 +256,7 @@ def hmm_train(features, label, seq_range):
 
 # supervised learning
 # model: class HiddenMarkovModel, calculate hyper parameters from labels
-    model = HiddenMarkovModel(n_feature=np.size(features,1), n_state=n_state)
+    model = HiddenMarkovModel(n_feature=np.size(features, 1), n_state=n_state)
     model.supervised_learn(features, label, seq_range)
 
 # Gaussian HMM (unsupervised)
