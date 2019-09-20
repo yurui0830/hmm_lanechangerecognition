@@ -59,21 +59,21 @@ class HiddenMarkovModel(object):
         # forward algorithm
         # Equation 19
         alpha = np.zeros((self.n_state, n_seq))
-        alpha[:,0] = self.startprob * self.B[:,0]
+        alpha[:, 0] = self.startprob * self.B[:, 0]
         # Equation 20
-        for t in range(1,n_seq):
+        for t in range(1, n_seq):
             for n in range(self.n_state):
-                alpha[n,t] = (np.dot(alpha[:,t-1], self.A[:,n])) * self.B[n,t]
+                alpha[n, t] = (np.dot(alpha[:, t-1], self.A[:, n])) * self.B[n, t]
         # Equation 21
-        prob = np.sum(alpha[:,-1])
+        prob = np.sum(alpha[:, -1])
         # backward algorithm
         # Equation 24
         beta = np.zeros((self.n_state, n_seq))
         beta[:-1] = 1
         # Equation 25
-        for t in range(0,n_seq-1):
+        for t in range(0, n_seq-1):
             for n in range(self.n_state):
-                beta[n,t] = np.sum(self.A[n,:] * self.B[:,t+1] * beta[:,t+1])
+                beta[n, t] = np.sum(self.A[n, :] * self.B[:, t+1] * beta[:, t+1])
         return alpha, beta, prob
 
 # Viterbi Algorithm, P264
@@ -185,9 +185,8 @@ class HiddenMarkovModel(object):
         # check the label at the first time step of each sequence
         # count_start: how many times the first time step of the sequence is labelled by one certain state
         for seq in range(np.size(seq_range, 0)-1):
-            for i in range(self.n_state):
-                if label[seq_range[seq]] == i:
-                    count_start[i] = count_start[i]+1
+            i = label[seq_range[seq]]
+            count_start[i] = count_start[i]+1
         # calculate startprob
         for i in range(self.n_state):
             self.startprob[i] = count_start[i]/count_start.sum()
@@ -198,16 +197,15 @@ class HiddenMarkovModel(object):
         # xi: count the numbers of transitions from Si to Sj
         # globals()['s'+str(i)] (array: unknown * n_feature): store the observations that labelled by one certain state
         for seq in range(tot_seq):
-            for i in range(self.n_state):
-                if label[seq] == i:
-                    globals()['s'+str(i)].append(features[seq])
-                    for j in range(self.n_state):
-                        if seq < tot_seq-1 and label[seq+1] == j and seq+1 not in seq_range:
-                            xi[i,j] = xi[i,j] + 1
+            i = label[seq]
+            globals()['s'+str(i)].append(features[seq])
+            if seq < tot_seq-1 and seq+1 not in seq_range:
+                j = label[seq + 1]
+                xi[i, j] = xi[i, j] + 1
         # calculate A (transition probability)
         for i in range(self.n_state):
             for j in range(self.n_state):
-                self.A[i,j] = xi[i,j]/xi[i].sum()
+                self.A[i, j] = xi[i, j]/xi[i].sum()
         # calculate mu, sigma
         for i in range(self.n_state):
             globals()['s'+str(i)] = np.array(globals()['s'+str(i)], dtype=float)
@@ -226,13 +224,13 @@ class HiddenMarkovModel(object):
         # forward algorithm
         # Equation 19
         alpha = np.zeros((self.n_state, n_seq))
-        alpha[:,0] = self.startprob * self.B[:,0]
+        alpha[:, 0] = self.startprob * self.B[:, 0]
         # Equation 20
-        for t in range(1,n_seq):
+        for t in range(1, n_seq):
             for n in range(self.n_state):
-                alpha[n,t] = (np.dot(alpha[:,t-1], self.A[:,n])) * self.B[n,t]
+                alpha[n, t] = (np.dot(alpha[:, t-1], self.A[:, n])) * self.B[n, t]
         # Equation 21
-        prob = np.sum(alpha[:,-1])
+        prob = np.sum(alpha[:, -1])
         if prob <= 0:
             prob = 1e-10
         score = np.log(prob)
@@ -266,6 +264,11 @@ def hmm_train(features, label, seq_range):
     new_model.startprob_ = model.startprob
     new_model.means_ = model.mu
     new_model.covars_ = model.sigma
+    covars = np.zeros([model.sigma.shape[0], model.sigma.shape[1]])
+    # when the covariance_type = 'diag'
+    #for i in range(model.sigma.shape[0]):
+    #    covars[i] = np.diag(model.sigma[i])
+    #new_model.covars_ = covars
 
 # return value
     return new_model

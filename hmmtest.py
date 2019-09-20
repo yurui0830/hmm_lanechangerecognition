@@ -7,6 +7,9 @@ from sklearn.model_selection import train_test_split
 def unfold_x(x, y, n_feature: int=6, dataset='train', window_size: int=20):
     if dataset == 'test':
         feature = np.zeros((20000, n_feature))
+        if x.ndim == 1:
+            temp = np.reshape(x, (-1, n_feature + 1))
+            return temp[:, 0:n_feature]
         for i in range(x.shape[0]):
             temp = np.reshape(x[i], (window_size, n_feature+1))
             feature[i * window_size:(i + 1) * window_size] = temp[:, 0:n_feature]
@@ -16,9 +19,9 @@ def unfold_x(x, y, n_feature: int=6, dataset='train', window_size: int=20):
     feature_r = np.zeros((20000, n_feature))
     feature_l = np.zeros((20000, n_feature))
     feature_lk = np.zeros((20000, n_feature))
-    label_r = np.zeros((20000,))
-    label_l = np.zeros((20000,))
-    label_lk = np.zeros((20000,))
+    label_r = np.zeros((20000,), dtype=int)
+    label_l = np.zeros((20000,), dtype=int)
+    label_lk = np.zeros((20000,), dtype=int)
     for i in range(x.shape[0]):
         if y[i] == 0:
             temp = np.reshape(x[i], (window_size, n_feature+1))
@@ -71,9 +74,14 @@ def hmm_trian_test(trian_x, train_y, test_x, test_y, n_feature: int=6, window_si
     model_lk = hmm_train(feat_lk, label_lk, s_range_lk)
 
     # prepare testing set
-    n_sequence = test_x.shape[0]
+
     test_feat = unfold_x(test_x, test_y, n_feature, dataset='test', window_size=window_size)
-    seq_range = np.arange(0, (n_sequence+1)*window_size, window_size)
+    if test_x.ndim == 1:
+        n_sequence = 1
+        seq_range = np.array([0, test_feat.shape[0]])
+    else:
+        n_sequence = test_x.shape[0]
+        seq_range = np.arange(0, (n_sequence + 1) * window_size, window_size)
     # model testing
     result_prob = np.zeros((n_sequence, 3))
     result = np.zeros((n_sequence,), dtype=int)
@@ -87,8 +95,9 @@ def hmm_trian_test(trian_x, train_y, test_x, test_y, n_feature: int=6, window_si
 
     # confusion matrix: row: predictions; column: labels
     confusion = np.zeros([3, 3])
-    for i in range(n_sequence):
-        confusion[result[i], test_y[i]] = confusion[result[i], test_y[i]] + 1
+    if n_sequence > 1:
+        for i in range(n_sequence):
+            confusion[result[i], test_y[i]] = confusion[result[i], test_y[i]] + 1
     # acc(array: rd,): true positive rate
     acc = np.count_nonzero(result == test_y)/n_sequence
 

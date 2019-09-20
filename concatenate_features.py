@@ -2,7 +2,7 @@ import numpy as np
 import csv
 
 
-def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = True):
+def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = False):
 
     """
     function concatenate_feature_label(filename, n_feature)
@@ -242,7 +242,9 @@ def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = T
                 features[i, 5] = -0.8
 
 # delete useless features
-    if n_feature != 6:
+    if n_feature == 4:
+        features = np.delete(features, [1, 3], 1)
+    elif n_feature == 3:
         features = np.delete(features, [0, 1, 3], 1)
 
 # return value
@@ -250,7 +252,7 @@ def concatenate_feature_label(filename, n_feature: int = 6, satruation: bool = T
 
 
 
-def i80_feature_label(filename, n_feature: int = 6, satruation: bool = True):
+def feature_label(filename, dataset, n_feature: int = 6, satruation: bool = False):
 
     """
     function concatenate_feature_label(filename, n_feature)
@@ -267,7 +269,7 @@ def i80_feature_label(filename, n_feature: int = 6, satruation: bool = True):
     """
 
 # open .csv file, store all the data in rows(list)
-    with open(filename+'_i80.csv', newline='', encoding='utf-8-sig') as csvfile:
+    with open(filename+'_'+dataset+'.csv', newline='', encoding='utf-8-sig') as csvfile:
         # read .csv file
         reader_1 = csv.reader(csvfile)
         # store data in rows
@@ -285,7 +287,7 @@ def i80_feature_label(filename, n_feature: int = 6, satruation: bool = True):
     # veh_num(int): count the number of vehicles (sequences)
     veh_num = 1
     # globals()[]: a way to combine string and variables in a variable name
-    seq = 'sequence_1_' + str(1)
+    seq = 'sequence_' + str(1)
     globals()[seq] = []
     # store data in sequence/label_seq+'i', whose type is going to be converted from list to ndarray
     for row in rows_1[1:]:
@@ -312,7 +314,7 @@ def i80_feature_label(filename, n_feature: int = 6, satruation: bool = True):
     seq_range = np.zeros((n_sequence + 1,), dtype=int)
     for i in range(1, np.size(length, 0)+1):
         seq = 'sequence_' + str(i)
-        features[seq_range[i-1]:seq_range[i-1]+length[i-1]] = globals()[seq][:]
+        features[seq_range[i-1]:seq_range[i-1]+length[i-1]] = globals()[seq]
         seq_range[i] = np.array([np.sum(length[:i])])
 
 # label the features by states
@@ -438,7 +440,9 @@ def i80_feature_label(filename, n_feature: int = 6, satruation: bool = True):
                 features[i, 5] = -0.8
 
 # delete useless features
-    if n_feature != 6:
+    if n_feature == 4:
+        features = np.delete(features, [1, 3], 1)
+    elif n_feature == 3:
         features = np.delete(features, [0, 1, 3], 1)
 
 # return value

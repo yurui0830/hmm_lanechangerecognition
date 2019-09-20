@@ -1,35 +1,36 @@
 import numpy as np
+from hmmevulation import data_segmentation
+from hmmtest import hmm_trian_test
 import matplotlib.pyplot as plt
 
 
-acc = np.array([0.94945055, 0.95164835, 0.9540293, 0.9514652, 0.95128205, 0.9492674, 0.9514652, 0.95421245, 0.95915751,
-                0.95164835, 0.9467033, 0.94139194, 0.94377289, 0.94725275, 0.94395604, 0.92893773, 0.92087912,
-                0.91373626, 0.92197802, 0.91098901, 0.91117216, 0.91062271, 0.90824176, 0.90091575, 0.89542125,
-                0.8985348, 0.89267399, 0.89047619, 0.89102564, 0.89047619])
-prec = np.array([0.99202128, 0.98941799, 0.98944591, 0.98941799, 0.99468085, 0.98938992, 0.98941799, 0.98944591,
-                 0.98950131, 0.98941799, 0.9893617,  0.98404255, 0.98670213, 0.98412698, 0.98670213, 0.98382749,
-                 0.98369565, 0.98087432, 0.98637602, 0.98351648, 0.9862259, 0.99168975, 0.99442897, 0.98882682,
-                 0.9915493, 0.9943662, 0.99152542, 0.99150142, 0.99150142, 0.99150142])
-recall = np.array([0.98938992, 0.99204244, 0.99206349, 0.99204244, 0.99204244, 0.98938992, 0.99204244, 0.99206349,
-                   0.99210526, 0.99204244, 0.992, 0.9919571, 0.99463807, 0.99465241, 0.99463807, 0.99455041,
-                   0.99450549, 0.99445983, 0.99450549, 0.99444444, 0.99444444, 0.99444444, 0.9972067, 0.9971831,
-                   0.99716714, 0.99717514, 0.99715909, 0.997151, 0.997151, 0.997151])
-f1 = 2*prec*recall/(prec+recall)
+"""
+generalization test
 
+trained on one 
 
-plt.figure(1)
-plt.plot(np.arange(1, 4, 0.1), prec, 'b', label='precision')
-plt.plot(np.arange(1, 4, 0.1), recall, 'g', label='recall')
-plt.ylim((0.95, 1))
-plt.xlabel('Seconds after the Behavior Starts (second)')
-plt.ylabel('Recognition Performance')
-plt.legend()
-plt.grid(True)
+x_r, y_r = data_segmentation('rightlc', n_feature=3, dataset='101', window_size=20)
+x_l, y_l = data_segmentation('leftlc', n_feature=3, dataset='101', window_size=20)
+x_lk, y_lk = data_segmentation('lk', n_feature=3, dataset='101', window_size=20)
+train_x = np.concatenate((x_r, x_l, x_lk))
+train_y = np.concatenate((y_r, y_l, y_lk))
 
-plt.figure(2)
-plt.plot(np.arange(1, 4, 0.1), f1, 'b')
-plt.ylim((0.95, 1))
-plt.xlabel('Seconds after the Behavior Starts (second)')
-plt.ylabel('Recognition Performance (F1 Score)')
-plt.grid(True)
-plt.show()
+x_r_test, y_r_test = data_segmentation('rightlc', n_feature=3, dataset='i80', window_size=20)
+x_l_test, y_l_test = data_segmentation('leftlc', n_feature=3, dataset='i80', window_size=20)
+x_lk_test, y_lk_test = data_segmentation('lk', n_feature=3, dataset='i80', window_size=20)
+test_x = np.concatenate((x_r_test, x_l_test, x_lk_test))
+test_y = np.concatenate((y_r_test, y_l_test, y_lk_test))
+
+acc, confusion = hmm_trian_test(train_x, train_y, test_x, test_y, n_feature=3, window_size=20)
+
+print(acc, confusion)
+
+"""
+conf = np.zeros([3, 3])
+conf[0] = [65, 0, 10]
+conf[1] = [0, 67, 12]
+conf[2] = [3, 1, 46]
+acc = conf.diagonal().sum()/conf.sum()
+prec = conf.diagonal().sum()/(conf.diagonal().sum()+conf[0:1, 2].sum())
+recall = conf.diagonal().sum()/(conf.diagonal().sum()+conf[2, 0:1].sum())
+print(acc, prec, recall)
