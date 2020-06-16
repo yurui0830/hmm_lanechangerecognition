@@ -91,13 +91,16 @@ def hmm_trian_test(trian_x, train_y, test_x, test_y, n_feature: int=6, window_si
         prob_lk = model_lk.score(test_feat[seq_range[i]:seq_range[i+1]])
         # store and compare probabilities
         result_prob[i] = [prob_r, prob_l, prob_lk]
+        print(result_prob)
         result[i] = np.argmax(result_prob[i])
 
     # confusion matrix: row: predictions; column: labels
     confusion = np.zeros([3, 3])
-    if n_sequence > 1:
-        for i in range(n_sequence):
-            confusion[result[i], test_y[i]] = confusion[result[i], test_y[i]] + 1
+    if n_sequence == 1:
+        acc = (result[0] == test_y)
+        return acc, confusion
+    for i in range(n_sequence):
+        confusion[result[i], test_y[i]] = confusion[result[i], test_y[i]] + 1
     # acc(array: rd,): true positive rate
     acc = np.count_nonzero(result == test_y)/n_sequence
 

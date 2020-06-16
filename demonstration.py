@@ -67,13 +67,13 @@ def data_segmentation(classname, n_feature: int=6, dataset='whole', window_size:
 
 def single_test(x, y, n_feature: int=6):
     accuracy = np.zeros((20,))
-    for i in range(10, 20):
+    for i in range(1, 20):
         # extract training and testing set
         x_test = x[0]
         y_test = y[0]
         x_train = x[1:]
         y_train = y[1:]
-        accuracy[i], _ = hmm_trian_test(x_train, y_train, x_test[:4*i], y_test, n_feature=n_feature)
+        accuracy[i], _ = hmm_trian_test(x_train, y_train, x_test[0:4*i], y_test, n_feature=n_feature)
     return accuracy
 
 
